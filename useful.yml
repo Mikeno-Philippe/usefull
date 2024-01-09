@@ -1,0 +1,175 @@
+# usefull package
+
+global_vars:
+
+  - name: "binPrefix" # Empty string for no symbol
+    type: "echo"
+    params:
+      echo: "0b"
+
+  - name: "hexPrefix" # Empty string for no symbol
+    type: "echo"
+    params:
+      echo: "0x"
+
+  - name: "decimals" # Number of digits after the decimal point
+    type: "echo"
+    params:
+      echo: "2"
+
+  - name: "dateFormatShort" 
+    type: "echo"
+    params:
+      echo: "%d/%m/%Y"
+
+  - name: "dateFormatLong" 
+    type: "echo"
+    params:
+      echo: "%A%e %B %Y"
+
+matches:
+
+  # Date & time
+
+  - trigger: ":dll"
+    label: "Today's date (long)"
+    replace: "{{today}} "
+    vars:
+      - name: today
+        type: date
+        params:
+          format: "{{dateFormatLong}}"
+
+  - trigger: ":dsn"
+    label: "Today's date (short)"
+    replace: "{{today}} "
+    vars:
+      - name: today
+        type: date
+        params:
+          format: "{{dateFormatShort}}"
+
+  - trigger: ":dst"
+    label: "Tomorrow's date (short)"
+    replace: "{{tomorrow}} "
+    vars:
+      - name: tomorrow
+        type: date
+        params:
+          format: "{{dateFormatShort}}"
+          offset: 86400
+
+  - trigger: ":dsy"
+    label: "Yesterday's date (short)"
+    replace: "{{yesterday}} "
+    vars:
+      - name: yesterday
+        type: date
+        params:
+          format: "{{dateFormatShort}}"
+          offset: -86400
+
+  - trigger: ":tn"
+    label: "Current local time"
+    replace: "{{mytime}} "
+    vars:
+      - name: mytime
+        type: date
+        params:
+          format: "%kh%M"
+
+  - regex: ":dow\\[(?P<date>.*)\\]" # Gives the weekday of the provided date
+    label: "Day of week :dow[1999-12-31]"
+    replace: "The weeksday for {{date}} is {{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "date -jf '%Y-%m-%d' '{{date}}' +%A"
+
+  - regex: ":days\\[(?P<date>.*)\\]"
+    label: "Number of days since given date :days[1999-12-31]"
+    replace: "{{days}} days since {{date}}"
+    vars:
+      - name: "secondsNow"
+        type: shell
+        params:
+          cmd: "date +%s"
+      - name: "secondsDate"
+        type: shell
+        params:
+          cmd: "date -jf '%Y-%m-%d' '{{date}}' +%s"
+      - name: "days"
+        type: shell
+        params:
+          cmd: "echo 'scale=0;({{secondsNow}} - {{secondsDate}}) / 86400' | bc"
+
+  - trigger: ":ip"
+    label: "Public IP-address"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "curl 'https://api.ipify.org'"
+
+  # Replaces with result of calculated math expression
+
+  - regex: ":cal\\[(?P<expression>.*)\\]"
+    label: "Gives result of calculated math expression (:cal[(12-34)*0.2])"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "echo 'scale={{decimals}};{{expression}}' | bc"
+
+  # conversion between Hex <-> Dec and Bin <-> Dec
+
+  - regex: ":hd\\[(?P<expression>.*)\\]" # Hex to Dec
+    label: "Convert Hex to Dec (:hd[FF] -> 255)"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "echo 'ibase=16;{{expression}}' | bc"
+
+  - regex: ":dh\\[(?P<expression>.*)\\]" # Dec to Hex
+    label: "Convert Dec to Hex (:dh[255] -> 0xFF)"
+    replace: "{{hexPrefix}}{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "echo 'obase=16;{{expression}}' | bc"
+
+  - regex: ":bd\\[(?P<expression>.*)\\]" # Bin to Dec
+    label: "Convert Bin to Dec (:bd[11111111] -> 255)"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "echo 'ibase=2;{{expression}}' | bc"
+
+  - regex: ":db\\[(?P<expression>.*)\\]" # Dec to Bin
+    label: "Convert Dec to Bin (:db[255] -> 0b11111111)"
+    replace: "{{binPrefix}}{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "echo 'obase=2;{{expression}}' | bc"
+
+  - trigger: ":rev" # Reverse given string: :rev()
+    label: "Reverse string in clipboard"
+    replace: "{{output}}"
+    propagate_case: true
+    vars:
+      - name: "clipBoard"
+        type: clipboard
+      - name: output
+        type: shell
+        params:
+          cmd: "echo -e '{{clipBoard}}' | rev"

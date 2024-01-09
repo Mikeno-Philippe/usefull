@@ -1,0 +1,6 @@
+author: Philippe Lagarrigue
+description: A simple package containing usefull triggers for date-time, bin/hex.dec conversions and strings
+name: usefull-package
+title: Usefull utilities package
+version: 0.1.0
+tags: ["date", "time", "hex", "binary", "conversion", "calculation", "math"]
